@@ -67,10 +67,9 @@ jobs:
           envs: DEPLOY_PATH
           script: |
             set -e
-            echo "=== PM2 error log ==="
-            cat /home/*/.pm2/logs/server-error.log 2>/dev/null | tail -50 || true
-            echo "=== PM2 out log ==="
-            cat /home/*/.pm2/logs/server-out.log 2>/dev/null | tail -20 || true
+            echo "=== Test run node directly ==="
+            cd /var/www/server
+            timeout 5 node .output/server/index.mjs 2>&1 || true
 
       - name: Start or restart PM2 app
         uses: appleboy/ssh-action@v1.0.3
