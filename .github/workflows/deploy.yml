@@ -65,10 +65,11 @@ jobs:
           script_stop: true
           envs: DEPLOY_PATH,PM2_APP_NAME
           script: |
+            #!/bin/bash
             set -e
             # Load user profile to get full PATH (nvm, etc.)
-            [ -f ~/.bashrc ] && source ~/.bashrc || true
-            [ -f ~/.profile ] && source ~/.profile || true
+            [ -f ~/.bashrc ] && . ~/.bashrc || true
+            [ -f ~/.profile ] && . ~/.profile || true
             export PATH="$PATH:$(npm config get prefix)/bin"
 
             echo "PATH=$PATH"
