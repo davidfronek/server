@@ -71,6 +71,10 @@ jobs:
             ls -la "$DEPLOY_PATH/"
             echo "=== .output exists? ==="
             ls -la "$DEPLOY_PATH/.output/" 2>/dev/null || echo ".output NOT FOUND"
+            echo "=== PM2 status ==="
+            pm2 list
+            echo "=== PM2 logs (last 20 lines) ==="
+            pm2 logs --nostream --lines 20 2>/dev/null || true
 
       - name: Start or restart PM2 app
         uses: appleboy/ssh-action@v1.0.3
