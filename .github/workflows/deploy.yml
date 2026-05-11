@@ -66,7 +66,7 @@ jobs:
           envs: DEPLOY_PATH,PM2_APP_NAME
           script: |
             set -e
-            export PATH="$PATH:/usr/local/bin:$(npm bin -g 2>/dev/null || npm root -g 2>/dev/null | sed 's|/node_modules$|/.bin|')"
+            export PATH="$PATH:$(npm config get prefix)/bin"
             cd "$DEPLOY_PATH"
             npm install --omit=dev
 
