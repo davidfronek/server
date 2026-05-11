@@ -66,25 +66,11 @@ jobs:
           envs: DEPLOY_PATH,PM2_APP_NAME
           script: |
             #!/bin/bash
-            set -e
-            # Load user profile to get full PATH (nvm, etc.)
-            [ -f ~/.bashrc ] && . ~/.bashrc || true
-            [ -f ~/.profile ] && . ~/.profile || true
-            export PATH="$PATH:$(npm config get prefix)/bin"
-
-            echo "PATH=$PATH"
-            echo "pm2 location: $(which pm2 || echo 'NOT FOUND')"
-            echo "node: $(node --version)"
-            echo "npm: $(npm --version)"
-
+            set -ex
             cd "$DEPLOY_PATH"
             npm install --omit=dev
 
-            if pm2 describe "$PM2_APP_NAME" >/dev/null 2>&1; then
-              pm2 restart "$PM2_APP_NAME" --update-env
-            else
-              pm2 start npm --name "$PM2_APP_NAME" -- run start
-            fi
+            pm2 describe "$PM2_APP_NAME" && pm2 restart "$PM2_APP_NAME" --update-env || pm2 start npm --name "$PM2_APP_NAME" -- run start
 
             pm2 save
 
