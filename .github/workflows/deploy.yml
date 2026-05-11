@@ -10,6 +10,11 @@ concurrency:
   group: deploy-server
   cancel-in-progress: true
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  DEPLOY_PATH: /var/www/server
+  PM2_APP_NAME: server
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -51,7 +56,7 @@ jobs:
           source: .output,package.json,package-lock.json
           target: ${{ env.DEPLOY_PATH }}
 
-      - name: Restart PM2 app
+      - name: Start or restart PM2 app
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -62,31 +67,15 @@ jobs:
           script: |
             set -e
             cd "$DEPLOY_PATH"
+            npm install --omit=dev
 
             if pm2 describe "$PM2_APP_NAME" >/dev/null 2>&1; then
               pm2 restart "$PM2_APP_NAME" --update-env
             else
-              pm2 start npm --name "$PM2_APP_NAME" -- run start --update-env
+              pm2 start npm --name "$PM2_APP_NAME" -- run start
             fi
 
             pm2 save
-        env:
-          DEPLOY_PATH: /var/www/server
-          PM2_APP_NAME: server
-          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
-      - name: Start application with pm2
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script_stop: true
-          script: |
-            set -e
-            cd "$DEPLOY_PATH"
-            npm install --production
-            pm2 startOrRestart ecosystem.config.js --env production
 
       - name: Verify deployment
         uses: appleboy/ssh-action@v1.0.3
