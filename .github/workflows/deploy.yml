@@ -42,7 +42,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script_stop: true
-          envs: DEPLOY_PATH
+          envs: DEPLOY_PATH,PM2_APP_NAME
           script: |
             set -e
             mkdir -p "$DEPLOY_PATH"
@@ -57,7 +57,7 @@ jobs:
           target: ${{ env.DEPLOY_PATH }}
           strip_components: 0
 
-      - name: Start or restart PM2 app
+      - name: Deploy and restart PM2
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -70,7 +70,6 @@ jobs:
             cd "$DEPLOY_PATH"
             npm install --omit=dev
 
-            # Stop demo-node-app if it occupies port 3000
             pm2 stop demo-node-app 2>/dev/null || true
             pm2 delete demo-node-app 2>/dev/null || true
 
@@ -81,13 +80,4 @@ jobs:
             fi
 
             pm2 save
-
-      - name: Verify deployment
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script_stop: true
-          script: |
             pm2 list
