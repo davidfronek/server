@@ -28,11 +28,14 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: server/package-lock.json
 
       - name: Install dependencies
+        working-directory: ./server
         run: npm ci
 
       - name: Build app
+        working-directory: ./server
         run: npm run build
 
       - name: Ensure deploy directory exists
@@ -53,9 +56,9 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: .output,package.json,package-lock.json
+          source: server/.output,server/package.json,server/package-lock.json
           target: ${{ env.DEPLOY_PATH }}
-          strip_components: 0
+          strip_components: 1
 
       - name: Deploy and restart PM2
         uses: appleboy/ssh-action@v1.0.3
