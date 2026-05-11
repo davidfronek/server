@@ -67,14 +67,10 @@ jobs:
           envs: DEPLOY_PATH
           script: |
             set -e
-            echo "=== Contents of $DEPLOY_PATH ==="
-            find "$DEPLOY_PATH" -maxdepth 3 -type f | head -30
-            # If scp created nested github/workspace dirs, move files up
-            if [ -d "$DEPLOY_PATH/github/workspace" ]; then
-              echo "Moving files from nested path..."
-              cp -r "$DEPLOY_PATH/github/workspace/." "$DEPLOY_PATH/"
-              rm -rf "$DEPLOY_PATH/github"
-            fi
+            echo "=== Top-level contents ==="
+            ls -la "$DEPLOY_PATH/"
+            echo "=== .output exists? ==="
+            ls -la "$DEPLOY_PATH/.output/" 2>/dev/null || echo ".output NOT FOUND"
 
       - name: Start or restart PM2 app
         uses: appleboy/ssh-action@v1.0.3
