@@ -67,9 +67,14 @@ jobs:
           envs: DEPLOY_PATH
           script: |
             set -e
-            echo "=== Test run node directly ==="
-            cd /var/www/server
-            timeout 5 node .output/server/index.mjs 2>&1 || true
+            echo "=== nitro.json ==="
+            cat /var/www/server/.output/nitro.json || true
+            echo "=== nginx config ==="
+            cat /etc/nginx/sites-enabled/* 2>/dev/null || cat /etc/nginx/nginx.conf 2>/dev/null | head -60 || true
+            echo "=== listening ports ==="
+            ss -tlnp | grep -E '80|3000|8080' || true
+            echo "=== pm2 env ==="
+            pm2 env 1 2>/dev/null | grep -E 'PORT|HOST|NODE_ENV' || true
 
       - name: Start or restart PM2 app
         uses: appleboy/ssh-action@v1.0.3
