@@ -57,25 +57,6 @@ jobs:
           target: ${{ env.DEPLOY_PATH }}
           strip_components: 0
 
-      - name: Fix uploaded file paths
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script_stop: true
-          envs: DEPLOY_PATH
-          script: |
-            set -e
-            echo "=== nitro.json ==="
-            cat /var/www/server/.output/nitro.json || true
-            echo "=== nginx config ==="
-            cat /etc/nginx/sites-enabled/* 2>/dev/null || cat /etc/nginx/nginx.conf 2>/dev/null | head -60 || true
-            echo "=== listening ports ==="
-            ss -tlnp | grep -E '80|3000|8080' || true
-            echo "=== pm2 env ==="
-            pm2 env 1 2>/dev/null | grep -E 'PORT|HOST|NODE_ENV' || true
-
       - name: Start or restart PM2 app
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -85,12 +66,19 @@ jobs:
           script_stop: true
           envs: DEPLOY_PATH,PM2_APP_NAME
           script: |
-            #!/bin/bash
-            set -ex
+            set -e
             cd "$DEPLOY_PATH"
             npm install --omit=dev
 
-            pm2 describe "$PM2_APP_NAME" && pm2 restart "$PM2_APP_NAME" --update-env || pm2 start npm --name "$PM2_APP_NAME" -- run start
+            # Stop demo-node-app if it occupies port 3000
+            pm2 stop demo-node-app 2>/dev/null || true
+            pm2 delete demo-node-app 2>/dev/null || true
+
+            if pm2 describe "$PM2_APP_NAME" >/dev/null 2>&1; then
+              PORT=3000 pm2 restart "$PM2_APP_NAME" --update-env
+            else
+              PORT=3000 pm2 start npm --name "$PM2_APP_NAME" -- run start
+            fi
 
             pm2 save
 
