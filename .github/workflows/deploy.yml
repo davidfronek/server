@@ -73,3 +73,27 @@ jobs:
         env:
           DEPLOY_PATH: /var/www/server
           PM2_APP_NAME: server
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+      - name: Start application with pm2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
+          script: |
+            set -e
+            cd "$DEPLOY_PATH"
+            npm install --production
+            pm2 startOrRestart ecosystem.config.js --env production
+
+      - name: Verify deployment
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
+          script: |
+            pm2 list
