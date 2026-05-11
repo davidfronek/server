@@ -9,15 +9,14 @@ function Home() {
     <main className="construction-page">
       <div className="ambient-grid" aria-hidden="true" />
       <div className="orb orb-a" aria-hidden="true" />
-      <div className="orb orb-b" aria-hidden="true" />
 
       <section className="construction-card">
         <p className="status-tag">Deployment status: compiling coffee</p>
         <h1>Under Construction</h1>
         <p className="lead">
           Nasi developeri jsou momentalne ve stavu{' '}
-          <code>git rebase --continue</code> a systemovy architekt bojuje s jednim
-          tvrdohlavym semicolonem.
+          <code>git rebase --continue</code>. Mezitim se sklada jemnejsi a cistsi
+          verze site bez zbytecneho hluku.
         </p>
 
         <div className="jokes-grid">
@@ -42,26 +41,19 @@ function Home() {
             </p>
           </article>
         </div>
-
-        <div className="loader-panel" aria-label="Loading progress">
-          <div className="loader-rail" aria-hidden="true">
-            <span className="loader-dot loader-dot-a" />
-            <span className="loader-dot loader-dot-b" />
-            <span className="loader-dot loader-dot-c" />
-            <span className="loader-scan" />
-          </div>
-          <div className="loader-copy">
-            <strong>Loading production-grade vibes...</strong>
-            <span>Builduje se UI, zatimco server ocekava, ze nekdo zaplati kafe.</span>
-          </div>
-        </div>
-
-        <div className="console-strip" role="status" aria-live="polite">
-          <span>$ npm run fix-everything</span>
-          <span>...</span>
-          <span>still loading</span>
-        </div>
       </section>
+
+      <aside className="corner-loader" aria-label="Loading progress">
+        <div className="corner-loader__rail" aria-hidden="true">
+          <span className="corner-loader__dot" />
+          <span className="corner-loader__dot" />
+          <span className="corner-loader__dot" />
+        </div>
+        <div className="corner-loader__text">
+          <strong>Deploying</strong>
+          <span>clean UI mode</span>
+        </div>
+      </aside>
     </main>
   )
 }
