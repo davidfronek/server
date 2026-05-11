@@ -78,6 +78,12 @@
   background: rgba(13, 148, 136, 0.12);
 }
 
+.site-logo {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0 0.5rem;
+}
+
 .construction-card h1 {
   margin: 0.8rem 0 0.7rem;
   font-size: clamp(2.1rem, 7vw, 4.4rem);

@@ -12,6 +12,12 @@ function Home() {
 
       <section className="construction-card">
         <p className="status-tag">Deployment status: compiling coffee</p>
+        <div className="site-logo" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="56" height="56">
+            <rect width="32" height="32" rx="6" fill="#0f172a"/>
+            <text x="4" y="22" fontFamily="monospace" fontSize="14" fontWeight="bold" fill="#38bdf8">&lt;/&gt;</text>
+          </svg>
+        </div>
         <h1>Under Construction</h1>
         <p className="lead">
           Nasi developeri jsou momentalne ve stavu{' '}
