@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Debian VPS tahak</title>
+  <style>
+    :root {
+      --bg:    #f0f0f0;
+      --card:  #ffffff;
+      --text:  #1a1a1a;
+      --muted: #6b6b6b;
+      --line:  #d0d0d0;
+      --head:  #e8e8e8;
+      --accent:#333333;
+      --hero-from: #2a2a2a;
+      --hero-to:   #444444;
+      --ok:    #2e7d32;
+      --shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+      --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      max-width: 1240px;
+      margin: 28px auto 48px;
+      padding: 0 16px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, var(--hero-from), var(--hero-to));
+      color: #ffffff;
+      border-radius: 0;
+      padding: 24px 20px;
+      box-shadow: var(--shadow-lg);
+      margin-bottom: 16px;
+      border-left: 4px solid #888888;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.6rem;
+      letter-spacing: 0.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .sub {
+      margin: 8px 0 0;
+      color: #cccccc;
+      font-size: 0.94rem;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px;
+      margin: 14px 0 16px;
+      align-items: center;
+    }
+
+    .toolbar input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 0;
+      padding: 10px 12px;
+      font-size: 0.95rem;
+      color: var(--text);
+      background: #ffffff;
+      box-shadow: var(--shadow);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .toolbar input:focus {
+      border-color: #888;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      border-radius: 0;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn:active {
+      opacity: 0.8;
+    }
+
+    .btn.clear {
+      background: #e8e8e8;
+      color: #333333;
+    }
+
+    .btn.clear:hover {
+      background: #d8d8d8;
+    }
+
+    .btn.top {
+      background: #2a2a2a;
+      color: #ffffff;
+      border-color: #2a2a2a;
+    }
+
+    .btn.top:hover {
+      background: #444444;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 0.89rem;
+      margin: 0 0 10px;
+    }
+
+    .ok {
+      color: var(--ok);
+      font-weight: 600;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-top: 3px solid #555555;
+      border-radius: 0;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .card h2 {
+      margin: 0;
+      padding: 11px 14px;
+      font-size: 0.98rem;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      color: var(--accent);
+      border-bottom: 1px solid var(--line);
+      background: var(--head);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 920px;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--line);
+      padding: 8px 11px;
+      text-align: left;
+      vertical-align: top;
+      font-size: 0.91rem;
+      background: #ffffff;
+    }
+
+    th {
+      background: var(--head);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      font-size: 0.82rem;
+    }
+
+    tr:nth-child(even) td {
+      background: #fafafa;
+    }
+
+    tr:hover td {
+      background: #f0f0f0;
+    }
+
+    tr.hidden {
+      display: none;
+    }
+
+    .cmd {
+      font-family: Consolas, "Courier New", monospace;
+      color: #222222;
+      white-space: nowrap;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 760px) {
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+      h1 {
+        font-size: 1.3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>Debian prikazy a Node.js VPS tahak</h1>
+      <p class="sub">Filtruj prikazy podle nazvu, oblasti nebo popisu. Filtrovani probiha napric obema tabulkami.</p>
+    </section>
+
+    <div class="toolbar">
+      <input id="filterInput" type="text" placeholder="Hledej napr. nginx, pm2, firewall, certbot..." aria-label="Filtr prikazu" />
+      <button class="btn clear" id="clearBtn" type="button">Vymazat filtr</button>
+      <button class="btn top" id="topBtn" type="button">Nahoru</button>
+    </div>
+
+    <p class="meta" id="summary"><span class="ok">Zobrazeno:</span> vsechny radky.</p>
+
+    <section class="card">
+      <h2>Zakladni Debian prikazy</h2>
+      <div class="table-wrap">
+        <table class="filter-table" data-table-name="Zakladni Debian prikazy">
+          <thead>
+            <tr>
+              <th>Oblast</th>
+              <th>Prikaz</th>
+              <th>Co dela</th>
+              <th>Priklad</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Aktualizace balicku</td><td class="cmd">apt update</td><td>Nacte seznam dostupnych balicku</td><td class="cmd">sudo apt update</td></tr>
+            <tr><td>Upgrade systemu</td><td class="cmd">apt upgrade -y</td><td>Nainstaluje dostupne aktualizace</td><td class="cmd">sudo apt upgrade -y</td></tr>
+            <tr><td>Instalace balicku</td><td class="cmd">apt install</td><td>Nainstaluje balicek</td><td class="cmd">sudo apt install nginx</td></tr>
+            <tr><td>Odinstalace balicku</td><td class="cmd">apt remove</td><td>Odinstaluje balicek</td><td class="cmd">sudo apt remove nginx</td></tr>
+            <tr><td>Uplne odebrani</td><td class="cmd">apt purge</td><td>Odinstaluje vcetne konfigurace</td><td class="cmd">sudo apt purge nginx</td></tr>
+            <tr><td>Vycisteni balicku</td><td class="cmd">apt autoremove</td><td>Smaze nepotrebne zavislosti</td><td class="cmd">sudo apt autoremove -y</td></tr>
+            <tr><td>Vyhledani balicku</td><td class="cmd">apt search</td><td>Vyhleda balicek v repozitari</td><td class="cmd">apt search nodejs</td></tr>
+            <tr><td>Info o balicku</td><td class="cmd">apt show</td><td>Zobrazi detail balicku</td><td class="cmd">apt show nginx</td></tr>
+            <tr><td>Stav sluzby</td><td class="cmd">systemctl status</td><td>Zobrazi stav sluzby</td><td class="cmd">systemctl status nginx</td></tr>
+            <tr><td>Spusteni sluzby</td><td class="cmd">systemctl start</td><td>Spusti sluzbu</td><td class="cmd">sudo systemctl start nginx</td></tr>
+            <tr><td>Zastaveni sluzby</td><td class="cmd">systemctl stop</td><td>Zastavi sluzbu</td><td class="cmd">sudo systemctl stop nginx</td></tr>
+            <tr><td>Restart sluzby</td><td class="cmd">systemctl restart</td><td>Restartuje sluzbu</td><td class="cmd">sudo systemctl restart nginx</td></tr>
+            <tr><td>Autostart sluzby</td><td class="cmd">systemctl enable</td><td>Zapne start po rebootu</td><td class="cmd">sudo systemctl enable nginx</td></tr>
+            <tr><td>Zakazani autostartu</td><td class="cmd">systemctl disable</td><td>Vypne start po rebootu</td><td class="cmd">sudo systemctl disable nginx</td></tr>
+            <tr><td>Aktivni procesy</td><td class="cmd">ps aux</td><td>Vypise bezici procesy</td><td class="cmd">ps aux</td></tr>
+            <tr><td>Hledani procesu</td><td class="cmd">grep</td><td>Filtruje vypis</td><td class="cmd">ps aux | grep node</td></tr>
+            <tr><td>Ukonceni procesu</td><td class="cmd">kill / kill -9</td><td>Ukonci proces podle PID</td><td class="cmd">kill -9 1234</td></tr>
+            <tr><td>Obsazene porty</td><td class="cmd">ss -tulpen</td><td>Zobrazi porty a sluzby</td><td class="cmd">ss -tulpen</td></tr>
+            <tr><td>Diskove misto</td><td class="cmd">df -h</td><td>Vyuziti disku</td><td class="cmd">df -h</td></tr>
+            <tr><td>Velikost slozek</td><td class="cmd">du -sh</td><td>Velikost adresare</td><td class="cmd">du -sh /var/www</td></tr>
+            <tr><td>Vypis souboru</td><td class="cmd">ls -la</td><td>Detailni vypis vcetne skrytych</td><td class="cmd">ls -la</td></tr>
+            <tr><td>Zmena slozky</td><td class="cmd">cd</td><td>Prechod do adresare</td><td class="cmd">cd /var/www</td></tr>
+            <tr><td>Kopirovani</td><td class="cmd">cp -r</td><td>Kopirovani souboru nebo slozek</td><td class="cmd">cp -r app app-backup</td></tr>
+            <tr><td>Presun nebo prejmenovani</td><td class="cmd">mv</td><td>Presun nebo rename</td><td class="cmd">mv old.txt new.txt</td></tr>
+            <tr><td>Mazani</td><td class="cmd">rm -rf</td><td>Smazani souboru nebo slozky</td><td class="cmd">rm -rf tmp</td></tr>
+            <tr><td>Opravneni</td><td class="cmd">chmod</td><td>Zmena prav</td><td class="cmd">chmod 755 script.sh</td></tr>
+            <tr><td>Vlastnik souboru</td><td class="cmd">chown</td><td>Zmena vlastnika</td><td class="cmd">chown user:user soubor</td></tr>
+            <tr><td>Prihlaseny uzivatel</td><td class="cmd">whoami</td><td>Zjisti aktualniho uzivatele</td><td class="cmd">whoami</td></tr>
+            <tr><td>Prepnuti uzivatele</td><td class="cmd">su -</td><td>Prepne uzivatele</td><td class="cmd">su - root</td></tr>
+            <tr><td>Vytvoreni uzivatele</td><td class="cmd">adduser</td><td>Vytvori noveho uzivatele i domovsky adresar</td><td class="cmd">sudo adduser deploy</td></tr>
+            <tr><td>Nastaveni hesla</td><td class="cmd">passwd</td><td>Nastavi nebo zmeni heslo uzivatele</td><td class="cmd">sudo passwd deploy</td></tr>
+            <tr><td>Informace o uzivateli</td><td class="cmd">id</td><td>Zobrazi UID, GID a skupiny</td><td class="cmd">id deploy</td></tr>
+            <tr><td>Skupiny uzivatele</td><td class="cmd">groups</td><td>Vypise skupiny uzivatele</td><td class="cmd">groups deploy</td></tr>
+            <tr><td>Pridani do sudo skupiny</td><td class="cmd">usermod -aG sudo</td><td>Prida uzivatele do administracni skupiny sudo</td><td class="cmd">sudo usermod -aG sudo deploy</td></tr>
+            <tr><td>Zamceni uctu</td><td class="cmd">passwd -l</td><td>Zamkne ucet uzivatele</td><td class="cmd">sudo passwd -l deploy</td></tr>
+            <tr><td>Smazani uzivatele</td><td class="cmd">deluser --remove-home</td><td>Smaze uzivatele vcetne domovske slozky</td><td class="cmd">sudo deluser --remove-home testuser</td></tr>
+            <tr><td>Logy systemu</td><td class="cmd">journalctl -xe</td><td>Zobrazi systemove logy</td><td class="cmd">journalctl -xe</td></tr>
+            <tr><td>Logy sluzby</td><td class="cmd">journalctl -u</td><td>Logy konkretni sluzby</td><td class="cmd">journalctl -u nginx -f</td></tr>
+            <tr><td>Sitove testy</td><td class="cmd">ping</td><td>Overi konektivitu</td><td class="cmd">ping 8.8.8.8</td></tr>
+            <tr><td>SSH pripojeni</td><td class="cmd">ssh</td><td>Pripojeni na server</td><td class="cmd">ssh user@ip</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Debian VPS Node.js tahak</h2>
+      <div class="table-wrap">
+        <table class="filter-table" data-table-name="Debian VPS Node.js tahak">
+          <thead>
+            <tr>
+              <th>Oblast</th>
+              <th>Prikaz</th>
+              <th>Co dela</th>
+              <th>Poznamka</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Update repozitaru</td><td class="cmd">sudo apt update</td><td>Nacte aktualni seznam balicku</td><td>Spust pred instalaci</td></tr>
+            <tr><td>Upgrade systemu</td><td class="cmd">sudo apt upgrade -y</td><td>Aktualizuje nainstalovane balicky</td><td>Pravidelne</td></tr>
+            <tr><td>Instalace zakladnich nastroju</td><td class="cmd">sudo apt install -y git curl ufw nginx</td><td>Nainstaluje Git, Curl, firewall a Nginx</td><td>Minimum pro web server</td></tr>
+            <tr><td>Pridani NodeSource</td><td class="cmd">curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -</td><td>Prida repozitar pro Node.js</td><td>Pak instalace Node</td></tr>
+            <tr><td>Instalace Node.js</td><td class="cmd">sudo apt install -y nodejs</td><td>Nainstaluje Node a npm</td><td>Over node -v, npm -v</td></tr>
+            <tr><td>Instalace PM2</td><td class="cmd">sudo npm i -g pm2</td><td>Process manager pro Node app</td><td>Doporuceno pro produkci</td></tr>
+            <tr><td>Vytvoreni deploy uzivatele</td><td class="cmd">sudo adduser deploy</td><td>Vytvori uzivatele pro nasazeni aplikace</td><td>Nepouzivej root pro bezny deploy</td></tr>
+            <tr><td>Sudo pro deploy uzivatele</td><td class="cmd">sudo usermod -aG sudo deploy</td><td>Prida deploy uzivatele do sudo skupiny</td><td>Pouzij jen pokud je to nutne</td></tr>
+            <tr><td>Prace jako deploy uzivatel</td><td class="cmd">sudo -iu deploy</td><td>Prepne shell na deploy ucet</td><td>Dalsi kroky delej pod timto uctem</td></tr>
+            <tr><td>Nastaveni SSH slozky</td><td class="cmd">mkdir -p ~/.ssh && chmod 700 ~/.ssh</td><td>Pripravi SSH adresar pro klice</td><td>Spoustet jako deploy uzivatel</td></tr>
+            <tr><td>Klon repozitare</td><td class="cmd">git clone git@github.com:uzivatel/repozitar.git</td><td>Stahne projekt z GitHubu</td><td>Pres SSH klic</td></tr>
+            <tr><td>Instalace zavislosti</td><td class="cmd">npm ci nebo npm install</td><td>Nainstaluje dependencies projektu</td><td>Preferuj npm ci</td></tr>
+            <tr><td>Start aplikace</td><td class="cmd">pm2 start src/index.js --name app</td><td>Spusti app pres PM2</td><td>Uprav cestu dle projektu</td></tr>
+            <tr><td>PM2 autostart</td><td class="cmd">pm2 save && pm2 startup</td><td>Obnovi procesy po rebootu</td><td>Spust i vygenerovany prikaz</td></tr>
+            <tr><td>Stav procesu</td><td class="cmd">pm2 status</td><td>Zobrazi bezici aplikace</td><td>Rychla kontrola</td></tr>
+            <tr><td>Logy aplikace</td><td class="cmd">pm2 logs app</td><td>Live logy konkretni app</td><td>Pridat --lines 200</td></tr>
+            <tr><td>Nginx start a autostart</td><td class="cmd">sudo systemctl enable --now nginx</td><td>Zapne Nginx a start po bootu</td><td>Dulezite pro reverse proxy</td></tr>
+            <tr><td>Test Nginx konfigurace</td><td class="cmd">sudo nginx -t</td><td>Overi syntaxi konfigurace</td><td>Pred reloadem</td></tr>
+            <tr><td>Reload Nginx</td><td class="cmd">sudo systemctl reload nginx</td><td>Nacte novou konfiguraci bez vypadku</td><td>Po uprave conf</td></tr>
+            <tr><td>Firewall SSH</td><td class="cmd">sudo ufw allow OpenSSH</td><td>Povoli SSH pristup</td><td>Nejdriv povolit SSH</td></tr>
+            <tr><td>Firewall web</td><td class="cmd">sudo ufw allow 80 && sudo ufw allow 443</td><td>Povoli HTTP a HTTPS</td><td>Pro web nutne</td></tr>
+            <tr><td>Omezeni brute-force na SSH</td><td class="cmd">sudo ufw limit OpenSSH</td><td>Prida rate limit pro opakovane pokusy o prihlaseni</td><td>Doporucene pro verejny server</td></tr>
+            <tr><td>Zapnuti firewallu</td><td class="cmd">sudo ufw enable</td><td>Aktivuje UFW</td><td>Over pravidla predem</td></tr>
+            <tr><td>Stav firewallu</td><td class="cmd">sudo ufw status verbose</td><td>Vypise aktivni pravidla</td><td>Kontrola po zmenach</td></tr>
+            <tr><td>Zaloha SSH konfigurace</td><td class="cmd">sudo cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak</td><td>Vytvori zalohu pred zmenami SSH</td><td>Vzdy pred hardeningem</td></tr>
+            <tr><td>Zakazat root login pres SSH</td><td class="cmd">sudo sed -i 's/^#*PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config</td><td>Zakaze prime prihlaseni roota</td><td>Pouzivej deploy uzivatele + sudo</td></tr>
+            <tr><td>Zakazat login heslem</td><td class="cmd">sudo sed -i 's/^#*PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config</td><td>Povoli jen prihlaseni pres SSH klic</td><td>Nastav klic predem, jinak se odriznes</td></tr>
+            <tr><td>Overeni SSH konfigurace</td><td class="cmd">sudo sshd -t</td><td>Zkontroluje syntaxi konfigurace SSH</td><td>Pred restartem sluzby</td></tr>
+            <tr><td>Reload SSH sluzby</td><td class="cmd">sudo systemctl reload ssh</td><td>Bezpecne nacte novou SSH konfiguraci</td><td>Na Debianu muze byt i sshd</td></tr>
+            <tr><td>Instalace fail2ban</td><td class="cmd">sudo apt install -y fail2ban</td><td>Blokuje IP po opakovanych neuspesnych pokusech</td><td>Dobra druha vrstva ochrany</td></tr>
+            <tr><td>Zapnuti fail2ban</td><td class="cmd">sudo systemctl enable --now fail2ban</td><td>Spusti fail2ban a zapne autostart</td><td>Over pres systemctl status fail2ban</td></tr>
+            <tr><td>Instalace Certbotu</td><td class="cmd">sudo apt install -y certbot python3-certbot-nginx</td><td>Instalace pro Let's Encrypt</td><td>Pro Nginx</td></tr>
+            <tr><td>Vydani SSL</td><td class="cmd">sudo certbot --nginx -d domena.cz -d www.domena.cz</td><td>Vystavi a zapoji certifikat</td><td>Domena musi mirit na VPS</td></tr>
+            <tr><td>Kontrola portu</td><td class="cmd">sudo ss -tulpen</td><td>Co nasloucha na jakem portu</td><td>Debug konektivity</td></tr>
+            <tr><td>Kontrola sluzeb</td><td class="cmd">systemctl status nginx</td><td>Stav systemd sluzby</td><td>Stejne pro dalsi sluzby</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Bezpecny postup SSH hardeningu (krok za krokem)</h2>
+      <div style="padding: 16px 18px; line-height: 1.8;">
+        <p style="margin: 0 0 16px; color: var(--muted); font-size: 0.91rem; border-left: 3px solid #aaa; padding-left: 10px; background: #f5f5f5; padding: 10px 12px;">
+          Pokud udelate chybu v SSH konfiguraci, muze se stat, ze se uz na server nedostanete.
+          Postupujte presne v tomto poradi a vzdy testujte v <strong>nove SSH session</strong>
+          pred zavrenim te stavajici.
+        </p>
+
+        <ol style="margin: 0; padding-left: 22px;">
+          <li>
+            <strong>Prihlaste se na server jako root (nebo sudo uzivatel)</strong>
+            <pre class="cmd" style="background:#eeeeee; border-left: 3px solid #888; padding: 8px 12px; margin: 6px 0 10px; white-space: pre-wrap;">ssh root@IP_ADRESA</pre>
+          </li>
+
+          <li>
+            <strong>Vytvorte noveho deploy uzivatele s SSH pristupem</strong>
+            <pre class="cmd" style="background:#eeeeee; border-left: 3px solid #888; padding: 8px 12px; margin: 6px 0 10px; white-space: pre-wrap;">adduser deploy
+usermod -aG sudo deploy</pre>
+          </li>
+
+          <li>
+            <strong>Zkopirujte SSH klic roota na noveho uzivatele</strong>
+            <pre class="cmd" style="background:#eeeeee; border-left: 3px solid #888; padding: 8px 12px; margin: 6px 0 10px; white-space: pre-wrap;">mkdir -p /home/deploy/.ssh
+cp ~/.ssh/authorized_keys /home/deploy/.ssh/
+chown -R deploy:deploy /home/deploy/.ssh
+chmod 700 /home/deploy/.ssh
+chmod 600 /home/deploy/.ssh/authorized_keys</pre>
+          </li>
+
+          <li>
+            <strong>Otevrete NOVOU terminálovou záložku a otestujte login jako deploy</strong>
+            <pre class="cmd" style="background:#eeeeee; border-left: 3px solid #888; padding: 8px 12px; margin: 6px 0 10px; white-space: pre-wrap;">ssh deploy@IP_ADRESA
+sudo whoami  # musi odpovedet: root</pre>
+            <span style="color: #c0392b; font-size: 0.9rem;">
+              &#9888; Nezavirejte puvodni SSH session dokud nestestujete pristup!
+            </span>
+          </li>
+
+          <li>
+            <strong>Zálohujte SSH konfiguraci</strong>
+            <pre class="cmd" style="background:#eeeeee; border-left: 3px solid #888; padding: 8px 12px; margin: 6px 0 10px; white-space: pre-wrap;">sudo cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak</pre>
+          </li>
+
+          <li>
+            <strong>Zakažte root login a prihlaseni heslem</strong>
+            <pre class="cmd" style="background:#eeeeee; border-left: 3px solid #888; padding: 8px 12px; margin: 6px 0 10px; white-space: pre-wrap;">sudo sed -i 's/^#*PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
+sudo sed -i 's/^#*PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config</pre>
+          </li>
+
+          <li>
+            <strong>Zkontrolujte konfiguraci a reloadujte SSH</strong>
+            <pre class="cmd" style="background:#eeeeee; border-left: 3px solid #888; padding: 8px 12px; margin: 6px 0 10px; white-space: pre-wrap;">sudo sshd -t          # musi byt bez chyb
+sudo systemctl reload ssh</pre>
+          </li>
+
+          <li>
+            <strong>V NOVE session otestujte, ze root login uz nefunguje</strong>
+            <pre class="cmd" style="background:#eeeeee; border-left: 3px solid #888; padding: 8px 12px; margin: 6px 0 10px; white-space: pre-wrap;">ssh root@IP_ADRESA    # musi byt odmitnut
+ssh deploy@IP_ADRESA  # musi fungovat</pre>
+          </li>
+
+          <li>
+            <strong>Nastavte fail2ban a UFW rate limit</strong>
+            <pre class="cmd" style="background:#eeeeee; border-left: 3px solid #888; padding: 8px 12px; margin: 6px 0 10px; white-space: pre-wrap;">sudo apt install -y fail2ban
+sudo systemctl enable --now fail2ban
+sudo ufw limit OpenSSH</pre>
+          </li>
+
+          <li>
+            <strong>Hotovo – server je zabezpecen</strong><br />
+            <span style="color: var(--ok);">&#10003;</span> Prihlaseni pouze pres SSH klic jako deploy uzivatel.<br />
+            <span style="color: var(--ok);">&#10003;</span> Root login zakaz.<br />
+            <span style="color: var(--ok);">&#10003;</span> Hesla zakaz.<br />
+            <span style="color: var(--ok);">&#10003;</span> fail2ban blokuje brute-force.<br />
+            <span style="color: var(--ok);">&#10003;</span> UFW omezuje opakovane pokusy.
+          </li>
+        </ol>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      const input = document.getElementById("filterInput");
+      const clearBtn = document.getElementById("clearBtn");
+      const topBtn = document.getElementById("topBtn");
+      const summary = document.getElementById("summary");
+      const tables = Array.from(document.querySelectorAll("table.filter-table"));
+
+      const countRows = () => {
+        let visible = 0;
+        let total = 0;
+
+        tables.forEach((table) => {
+          const rows = Array.from(table.querySelectorAll("tbody tr"));
+          total += rows.length;
+          visible += rows.filter((row) => !row.classList.contains("hidden")).length;
+        });
+
+        return { visible, total };
+      };
+
+      const applyFilter = () => {
+        const query = input.value.trim().toLowerCase();
+
+        tables.forEach((table) => {
+          const rows = Array.from(table.querySelectorAll("tbody tr"));
+          rows.forEach((row) => {
+            const text = row.innerText.toLowerCase();
+            const match = query === "" || text.includes(query);
+            row.classList.toggle("hidden", !match);
+          });
+        });
+
+        const { visible, total } = countRows();
+        if (!query) {
+          summary.innerHTML = '<span class="ok">Zobrazeno:</span> vsechny radky.';
+        } else {
+          summary.innerHTML = '<span class="ok">Filtr:</span> "' + query + '" | zobrazeno ' + visible + ' z ' + total + ' radku.';
+        }
+      };
+
+      input.addEventListener("input", applyFilter);
+
+      clearBtn.addEventListener("click", () => {
+        input.value = "";
+        applyFilter();
+        input.focus();
+      });
+
+      topBtn.addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+
+      applyFilter();
+    })();
+  </script>
+</body>
+</html>
