@@ -69,6 +69,11 @@ jobs:
             cd "$DEPLOY_PATH"
             npm install --omit=dev
 
+            # Install pm2 globally if not present
+            if ! command -v pm2 >/dev/null 2>&1; then
+              npm install -g pm2
+            fi
+
             if pm2 describe "$PM2_APP_NAME" >/dev/null 2>&1; then
               pm2 restart "$PM2_APP_NAME" --update-env
             else
