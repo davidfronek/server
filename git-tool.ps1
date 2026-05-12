@@ -55,7 +55,7 @@ function Get-CurrentBranch {
 function Get-GitStatus {
   param([string]$WorkDir)
   Push-Location $WorkDir
-  try { return (& git status --porcelain) }
+  try { return (& git status --porcelain -- .) }
   finally { Pop-Location }
 }
 
@@ -78,7 +78,6 @@ $rootGit = Test-Path (Join-Path $BaseDir ".git")
 $projects = @()
 
 if ($rootGit) {
-  $projects += [PSCustomObject]@{ Name = "(workspace root)"; Path = $BaseDir }
   foreach ($d in Get-ChildItem -Path $BaseDir -Directory | Where-Object { $_.Name -notmatch '^\.' }) {
     $projects += [PSCustomObject]@{ Name = $d.Name; Path = $d.FullName }
   }
@@ -98,6 +97,11 @@ if ($projects.Count -eq 0) {
 # ---------------------------------------------------------------------------
 # Vyber projektu
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Vnejsi smycka – vyber projektu
+# ---------------------------------------------------------------------------
+while ($true) {
+
 Write-Host "Dostupne projekty:"
 Write-Host ""
 for ($i = 0; $i -lt $projects.Count; $i++) {
@@ -109,20 +113,14 @@ for ($i = 0; $i -lt $projects.Count; $i++) {
 Write-Host ""
 
 $selectedIdx = Read-MenuNumberOrQuit -Prompt ("Zvolte projekt (1-{0}) nebo Q" -f $projects.Count) -Min 1 -Max $projects.Count
-if ($null -eq $selectedIdx) { Write-Host "Zruseno."; exit 0 }
+if ($null -eq $selectedIdx) { Write-Host "Nashledanou."; exit 0 }
 
 $project = $projects[$selectedIdx - 1]
-$gitDir  = if ($rootGit) { $BaseDir } else { $project.Path }
+$gitDir  = $project.Path
 
-# ---------------------------------------------------------------------------
 # Info o projektu
-# ---------------------------------------------------------------------------
 $branch     = Get-CurrentBranch $gitDir
-$status     = Get-GitStatus $gitDir
-$dirtyCount = ($status | Measure-Object).Count
-$dirtyLabel = if ($dirtyCount -gt 0) { "$dirtyCount zmen" } else { "zadne zmeny" }
-
-$remoteUrl = ""
+$remoteUrl  = ""
 try {
   Push-Location $gitDir
   $remoteUrl = (& git remote get-url origin 2>$null)
@@ -134,12 +132,25 @@ Write-Host "Projekt : $($project.Name)"
 Write-Host "Cesta   : $($project.Path)"
 Write-Host "Vetev   : $branch"
 Write-Host "Remote  : $(if ($remoteUrl) { $remoteUrl } else { 'N/A' })"
-Write-Host "Stav    : $dirtyLabel" -ForegroundColor $(if ($dirtyCount -gt 0) { "Yellow" } else { "Green" })
 Write-Host ""
 
 # ---------------------------------------------------------------------------
-# Menu akci
+# Menu akci – smycka
 # ---------------------------------------------------------------------------
+while ($true) {
+
+# Aktualizuj stav pred zobrazenim menu
+$branch     = Get-CurrentBranch $gitDir
+$status     = Get-GitStatus $gitDir
+$dirtyCount = ($status | Measure-Object).Count
+$dirtyLabel = if ($dirtyCount -gt 0) { "$dirtyCount zmen" } else { "zadne zmeny" }
+
+Write-Host ""
+Write-Host "-----------------------------------------------" -ForegroundColor DarkCyan
+Write-Host ("  Projekt: {0}   Vetev: {1}   Stav: {2}" -f $project.Name, $branch, $dirtyLabel) -ForegroundColor $(if ($dirtyCount -gt 0) { "Yellow" } else { "Cyan" })
+Write-Host "-----------------------------------------------" -ForegroundColor DarkCyan
+Write-Host ""
+
 $actions = @()
 if ($dirtyCount -gt 0) {
   $actions += [PSCustomObject]@{ Key = "commit";      Label = "Commit" }
@@ -152,6 +163,7 @@ $actions += [PSCustomObject]@{ Key = "log";      Label = "Log (poslednich 15 com
 $actions += [PSCustomObject]@{ Key = "diff";     Label = "Diff (zmeny vs HEAD)" }
 $actions += [PSCustomObject]@{ Key = "branches"; Label = "Sprava vetvi" }
 $actions += [PSCustomObject]@{ Key = "stash";    Label = "Stash" }
+$actions += [PSCustomObject]@{ Key = "__BACK__"; Label = "Zpet na vyber projektu" }
 
 Write-Host "Akce:"
 Write-Host ""
@@ -170,13 +182,15 @@ $shortcuts["G"] = "log"
 $shortcuts["D"] = "diff"
 $shortcuts["B"] = "branches"
 $shortcuts["T"] = "stash"
+$shortcuts["M"] = "__BACK__"
 
 $shortcutPairs = $shortcuts.GetEnumerator() | Sort-Object Name | ForEach-Object { "{0}={1}" -f $_.Name, $_.Value }
 Write-Host ("Zkratky: {0} | Q=konec" -f ($shortcutPairs -join ", "))
 Write-Host ""
 
 $action = Read-ActionChoice -Prompt ("Zvolte akci (1-{0}) nebo zkratku" -f $actions.Count) -Actions $actions -Shortcuts $shortcuts
-if ($action -eq "__QUIT__") { Write-Host "Zruseno."; exit 0 }
+if ($action -eq "__QUIT__") { Write-Host "Nashledanou."; exit 0 }
+if ($action -eq "__BACK__") { Write-Host ""; break }
 
 # ---------------------------------------------------------------------------
 # Pomocna funkce pro commit
@@ -196,7 +210,7 @@ function Do-Commit {
   if ($addMode -eq "R") {
     Push-Location $WorkDir
     try {
-      & git status --short
+      & git status --short -- .
       Write-Host ""
       $files = (Read-Host "  Soubory oddelene mezerou (nebo . pro vsechny)").Trim()
       if ($files -eq ".") { & git add -A }
@@ -225,7 +239,7 @@ try {
 
     "status" {
       Write-Host ""
-      Invoke-Git $gitDir "status"
+      Invoke-Git $gitDir "status", "--", "."
     }
 
     "log" {
@@ -235,7 +249,7 @@ try {
 
     "diff" {
       Write-Host ""
-      Invoke-Git $gitDir "diff", "HEAD"
+      Invoke-Git $gitDir "diff", "HEAD", "--", "."
     }
 
     "commit" {
@@ -334,7 +348,8 @@ try {
 catch {
   Write-Host ""
   Write-Host "Chyba: $_" -ForegroundColor Red
-  exit 1
 }
 
-Write-Host ""
+} # konec while (akce)
+
+} # konec while (projekty)

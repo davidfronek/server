@@ -79,11 +79,11 @@ function Get-PidsByListeningPort {
 
 function Test-ProcessBelongsToProject {
   param(
-    [int]$Pid,
+    [int]$ProcessId,
     [string]$ProjectRoot
   )
 
-  $proc = Get-CimInstance Win32_Process -Filter "ProcessId = $Pid" -ErrorAction SilentlyContinue
+  $proc = Get-CimInstance Win32_Process -Filter "ProcessId = $ProcessId" -ErrorAction SilentlyContinue
   if (-not $proc -or -not $proc.CommandLine) {
     return $false
   }
@@ -131,7 +131,7 @@ function Stop-ManagedWindows {
   }
 }
 
-function Cleanup-RunnerFiles {
+function Remove-OldRunnerFiles {
   param(
     [string]$RunnerRoot,
     [int]$RetentionHours = 24
@@ -168,7 +168,7 @@ function Start-ManagedPowerShell {
     New-Item -ItemType Directory -Path $runnerRoot -Force | Out-Null
   }
 
-  Cleanup-RunnerFiles -RunnerRoot $runnerRoot -RetentionHours $RunnerRetentionHours
+  Remove-OldRunnerFiles -RunnerRoot $runnerRoot -RetentionHours $RunnerRetentionHours
 
   $stamp = Get-Date -Format "yyyyMMdd-HHmmss-fff"
   $runnerFile = Join-Path $runnerRoot ("runner-{0}-{1}.ps1" -f $safeTitle.Replace(" ", "_"), $stamp)
@@ -198,9 +198,9 @@ function Get-DetectedVitePort {
   )
 
   foreach ($port in $StartPort..$EndPort) {
-    $pids = Get-PidsByListeningPort -Port $port
-    foreach ($pid in $pids) {
-      if (Test-ProcessBelongsToProject -Pid $pid -ProjectRoot $ProjectRoot) {
+    $portPids = Get-PidsByListeningPort -Port $port
+    foreach ($procId in $portPids) {
+      if (Test-ProcessBelongsToProject -ProcessId $procId -ProjectRoot $ProjectRoot) {
         return $port
       }
     }
@@ -221,12 +221,12 @@ function Get-VitePortFromLog {
     return $null
   }
 
-  $matches = [regex]::Matches($text, "https?://(?:localhost|127\.0\.0\.1):(\d+)", [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
-  if ($matches.Count -eq 0) {
+  $urlMatches = [regex]::Matches($text, "https?://(?:localhost|127\.0\.0\.1):(\d+)", [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+  if ($urlMatches.Count -eq 0) {
     return $null
   }
 
-  return [int]$matches[$matches.Count - 1].Groups[1].Value
+  return [int]$urlMatches[$urlMatches.Count - 1].Groups[1].Value
 }
 
 function Open-AppUrls {
@@ -442,8 +442,8 @@ function Stop-Backend {
   )
 
   Stop-ManagedWindows -TitlePrefix $Title
-  foreach ($pid in (Get-PidsByListeningPort -Port $Port)) {
-    Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
+  foreach ($procId in (Get-PidsByListeningPort -Port $Port)) {
+    Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue
   }
   Stop-ManagedWindows -TitlePrefix $Title
 }
@@ -458,9 +458,9 @@ function Stop-Vite {
 
   Stop-ManagedWindows -TitlePrefix $Title
   foreach ($port in $StartPort..$EndPort) {
-    foreach ($pid in (Get-PidsByListeningPort -Port $port)) {
-      if (Test-ProcessBelongsToProject -Pid $pid -ProjectRoot $ProjectRoot) {
-        Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
+    foreach ($procId in (Get-PidsByListeningPort -Port $port)) {
+      if (Test-ProcessBelongsToProject -ProcessId $procId -ProjectRoot $ProjectRoot) {
+        Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue
       }
     }
   }
